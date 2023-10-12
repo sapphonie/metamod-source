@@ -51,8 +51,27 @@
 
 #include "sh_list.h"
 
+#include <memory>
+
+namespace std
+{
+	template <>
+	struct default_delete<FILE>
+	{
+		void operator () (FILE* file) const
+		{
+			fclose(file);
+		}
+	};
+}
+
 namespace SourceHook
 {
+#if SH_SYS == SH_SYS_LINUX
+	static std::unique_ptr<FILE> selfMaps( std::fopen( "/proc/self/maps",    "r" ) );
+	static std::unique_ptr<FILE> curMaps ( std::fopen( "/proc/curproc/maps", "r" ) );
+#endif
+
 	static inline bool GetPageBits(void *addr, int *bits)
 	{
 #if SH_SYS == SH_SYS_LINUX
@@ -62,7 +81,6 @@ namespace SourceHook
 
 		// Open once statically, duplicate before using to stay safe
 		// Way way faster than reopening from scratch
-		static FILE *pMasterFile = fopen("/proc/self/maps", "r");
 		FILE *pF = fdopen(dup(fileno(pMasterFile)), "r");
 		if (pF) {
 			// Linux /proc/self/maps -> parse
