@@ -81,7 +81,7 @@ namespace SourceHook
 
 		// Open once statically, duplicate before using to stay safe
 		// Way way faster than reopening from scratch
-		FILE *pF = fdopen(dup(fileno(pMasterFile)), "r");
+		FILE *pF = fdopen(dup(fileno(selfMaps.get())), "r");
 		if (pF) {
 			// Linux /proc/self/maps -> parse
 			// Format:
@@ -116,7 +116,7 @@ namespace SourceHook
 			fclose(pF);
 			return bFound;
 		}
-		pF = fopen("/proc/curproc/map", "r");
+		pF = fdopen(dup(fileno(curMaps.get())), "r");
 		if (pF) {
 			// FreeBSD /proc/curproc/map -> parse
 			// 0x804800 0x805500 13 15 0xc6e18960 r-x 21 0x0 COW NC vnode
